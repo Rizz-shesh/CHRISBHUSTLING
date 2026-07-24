@@ -1,0 +1,103 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --font-display: "Fraunces", ui-serif, Georgia, serif;
+  --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Space Mono", ui-monospace, monospace;
+
+  --color-ink: #161a22;
+  --color-ink-soft: #1c212b;
+  --color-paper: #f1ece1;
+  --color-brass: #b8934a;
+  --color-brass-lite: #d8b673;
+  --color-brick: #8c4a38;
+  --color-ledger-line: #3a4150;
+}
+
+:root {
+  --ink: #161a22;
+  --ink-soft: #1c212b;
+  --paper: #f1ece1;
+  --brass: #b8934a;
+  --brass-lite: #d8b673;
+  --brick: #8c4a38;
+  --ledger-line: #3a4150;
+  --ink-70: rgba(241, 236, 225, 0.7);
+  --ink-45: rgba(241, 236, 225, 0.45);
+}
+
+@layer base {
+  * {
+    border-color: var(--ledger-line);
+  }
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    background-color: var(--ink);
+    color: var(--paper);
+    font-family: var(--font-body);
+  }
+  ::selection {
+    background: var(--brass);
+    color: var(--ink);
+  }
+  *:focus-visible {
+    outline: 2px solid var(--brass);
+    outline-offset: 3px;
+    border-radius: 1px;
+  }
+}
+
+/* Ledger eyebrow tick */
+.eyebrow {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.72rem;
+}
+
+/* Grain / paper texture overlay for cream inserts */
+.paper-grain {
+  background-color: var(--paper);
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      rgba(22, 26, 34, 0.035) 0px,
+      rgba(22, 26, 34, 0.035) 1px,
+      transparent 1px,
+      transparent 28px
+    );
+}
+
+/* CTA underline extend on hover */
+.cta-underline {
+  position: relative;
+  display: inline-block;
+}
+.cta-underline::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -3px;
+  height: 2px;
+  width: 100%;
+  background: var(--brass);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.cta-underline:hover::after,
+.cta-underline:focus-visible::after {
+  transform: scaleX(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
