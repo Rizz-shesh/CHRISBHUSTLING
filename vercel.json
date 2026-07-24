@@ -3,7 +3,7 @@
   "framework": "vite",
   "installCommand": "bun install",
   "buildCommand": "bun run build:web",
-  "outputDirectory": "../web/dist",
+  "outputDirectory": "packages/web/dist",
   "functions": {
     "api/[...path].ts": {
       "maxDuration": 30
