@@ -9,6 +9,9 @@ release
 web-build
 *.tgz
 
+# bundled Vercel API function (built by `bun run build:api`)
+api/\[...path\].js
+
 # code coverage
 coverage
 *.lcov
