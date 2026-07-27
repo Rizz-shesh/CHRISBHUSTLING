@@ -1,5 +1,5 @@
 import type { RouterClient } from "@orpc/server";
-import { createApp } from "./__core/app";
+import { base, createApp } from "./__core/app";
 import { ping } from "./routes/ping";
 import { rentals } from "./routes/rentals";
 import { admin } from "./routes/admin";
@@ -11,12 +11,12 @@ import { services } from "./routes/services";
 // Keep each routes/ file under 500 lines (`bun run lint` enforces this);
 // split into more feature files as they grow.
 // Patterns and examples: skills/app/references/api.md
-export const router = {
+export const router = base.router({
   ping,
   rentals,
   admin,
   services,
-};
+});
 
 export type AppRouter = typeof router;
 /** Typed client for the router — used by the web and mobile api clients. */

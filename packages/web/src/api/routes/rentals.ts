@@ -25,6 +25,8 @@ export const rentals = {
           area: input.area?.trim() || null,
         })
         .returning();
+      if (!row) throw new Error("Rental signup could not be saved.");
+
       const webhook = process.env.GHL_WEBHOOK_URL?.trim();
       if (!webhook) return { ok: true, id: row.id, ghlSynced: false };
 

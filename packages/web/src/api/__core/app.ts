@@ -44,7 +44,7 @@ export function createApp(router: Router<Record<never, never>, RpcContext>) {
       prefix: "/api/rpc",
       context: { headers: c.req.raw.headers },
     });
-    if (matched) return c.newResponse(response.body, response);
+    if (matched) return response;
     await next();
   });
 

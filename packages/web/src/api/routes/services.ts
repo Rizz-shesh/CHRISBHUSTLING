@@ -30,6 +30,7 @@ export const services = {
         consent: input.consent,
       })
       .returning();
+    if (!row) throw new Error("Service inquiry could not be saved.");
 
     const webhook = process.env.GHL_WEBHOOK_URL?.trim();
     if (!webhook) return { ok: true as const, id: row.id, ghlSynced: false };
