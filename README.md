@@ -40,7 +40,7 @@ packages/
         routes/              Feature routers, one file per feature (max 500 lines each)
         index.ts             Composes feature routers + AppRouter export
         database/
-          __client.ts        Database client (Turso/LibSQL) — template-managed
+          __client.ts        Database client (Postgres/Supabase) — template-managed
           index.ts           Re-exports db from __client
           schema.ts          Drizzle schema
       web/

@@ -17,7 +17,6 @@
     "db:push": "bun --env-file=../../.env drizzle-kit push"
   },
   "dependencies": {
-    "@libsql/client": "^0.17.2",
     "@orpc/client": "^1.14.7",
     "@orpc/server": "^1.14.7",
     "@orpc/tanstack-query": "^1.14.7",
@@ -29,6 +28,7 @@
     "hono": "^4.12.10",
     "lucide-react": "^0.577.0",
     "motion": "^12.42.2",
+    "postgres": "^3.4.9",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-hook-form": "^7.71.2",
