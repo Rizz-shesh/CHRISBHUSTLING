@@ -24573,7 +24573,7 @@ var serviceInquiries = pgTable("service_inquiries", {
 });
 
 // packages/web/src/api/database/__client.ts
-var client = src_default(process.env.DATABASE_URL, { prepare: false });
+var client = src_default(process.env.DATABASE_URL, { prepare: false, connect_timeout: 8 });
 var db = drizzle(client, { schema: exports_schema });
 // packages/web/src/api/routes/rentals.ts
 var rentals = {
