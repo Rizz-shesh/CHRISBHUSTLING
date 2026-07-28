@@ -1,9 +1,16 @@
 import { motion, useReducedMotion } from "motion/react";
 import { useState } from "react";
-import { ArrowRight, Menu, X } from "lucide-react";
+import { ArrowRight, Facebook, Linkedin, Menu, X } from "lucide-react";
+import { FaTiktok } from "react-icons/fa6";
 import { Logo } from "../components/logo";
 import { AscendingLine } from "../components/ascending-line";
 import { useRentalSignup } from "../queries/rentals";
+
+const SOCIAL_LINKS = [
+  { label: "Facebook", href: "https://www.facebook.com/people/Chrisbhustling-Business-Real-Estate/100083666815787/", Icon: Facebook },
+  { label: "LinkedIn", href: "https://www.linkedin.com/in/bk-bookman-chris-05809592/", Icon: Linkedin },
+  { label: "TikTok", href: "https://www.tiktok.com/@chrisbhustling", Icon: FaTiktok },
+];
 
 /* ---------- small shared bits ---------- */
 
@@ -909,6 +916,21 @@ function Footer() {
               Your trusted partner in achieving financial freedom and success — from
               restored credit to generational wealth.
             </p>
+            <div className="mt-5 flex items-center gap-4">
+              {SOCIAL_LINKS.map(({ label, href, Icon }) => (
+                <a
+                  key={label}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={label}
+                  className="transition-colors hover:text-brass"
+                  style={{ color: "var(--ink-70)" }}
+                >
+                  <Icon size={18} />
+                </a>
+              ))}
+            </div>
           </div>
 
           <div>
