@@ -60,7 +60,7 @@ const NAV = [
   { label: "About", href: "#about" },
   { label: "Why Us", href: "#why" },
   { label: "Insights", href: "#blogs" },
-  { label: "Contact", href: "#contact" },
+  { label: "Contact", href: "/contact" },
 ];
 
 function Header() {
@@ -74,7 +74,7 @@ function Header() {
             Western PA · Roselle, NJ
           </span>
           <a
-            href="#contact"
+            href="/contact"
             className="eyebrow cta-underline text-[0.6rem]"
             style={{ color: "var(--ink-70)" }}
           >
@@ -934,7 +934,7 @@ function Footer() {
             <div className="mt-4 flex flex-col gap-2 text-sm" style={{ color: "var(--ink-70)" }}>
               <a href="#services" className="cta-underline w-fit">Services</a>
               <a href="#blogs" className="cta-underline w-fit">Insights</a>
-              <a href="#contact" className="cta-underline w-fit">Contact</a>
+              <a href="/contact" className="cta-underline w-fit">Contact</a>
             </div>
           </div>
         </div>

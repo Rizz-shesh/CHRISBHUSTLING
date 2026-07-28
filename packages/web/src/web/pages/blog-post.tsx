@@ -68,7 +68,7 @@ export default function BlogPostPage() {
             ))}
 
             <div className="mt-14 border-y py-6" style={{ borderColor: "var(--ledger-line)" }}>
-              <Link href="/#contact" className="inline-flex items-center gap-2 font-semibold text-brass">
+              <Link href="/contact" className="inline-flex items-center gap-2 font-semibold text-brass">
                 Talk with Chris B Hustling <ArrowRight size={16} />
               </Link>
             </div>

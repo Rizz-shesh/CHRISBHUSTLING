@@ -28,7 +28,7 @@ export default function ServicePage() {
             <p className="font-mono text-xs uppercase tracking-[0.18em] text-brass">Chris B Hustling — Service</p>
             <h1 className="mt-5 font-display text-4xl font-semibold leading-tight tracking-tight text-[#f4eee4] md:text-6xl">{service.title}</h1>
             <p className="mt-6 max-w-2xl text-lg leading-8" style={{ color: "var(--ink-70)" }}>{service.intro}</p>
-            <Link href="/#contact" className="mt-8 inline-flex items-center gap-2 font-semibold text-brass">Discuss your goals <ArrowRight size={16} /></Link>
+            <a href="#inquiry" className="mt-8 inline-flex items-center gap-2 font-semibold text-brass">Discuss your goals <ArrowRight size={16} /></a>
           </div>
           <div className="aspect-[4/3] overflow-hidden border" style={{ borderColor: "var(--ledger-line)" }}>
             <img src={service.image} alt={service.title} className="h-full w-full object-cover" />
@@ -86,7 +86,7 @@ export default function ServicePage() {
             ))}
           </div>
           <div className="mt-12 border-t pt-8" style={{ borderColor: "var(--ledger-line)" }}>
-            <Link href="/#contact" className="inline-flex items-center gap-2 font-semibold text-brass">Get started with Chris B Hustling <ArrowRight size={16} /></Link>
+            <a href="#inquiry" className="inline-flex items-center gap-2 font-semibold text-brass">Get started with Chris B Hustling <ArrowRight size={16} /></a>
           </div>
         </section>
 

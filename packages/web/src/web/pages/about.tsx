@@ -61,7 +61,7 @@ export default function AboutPage() {
               </div>
             ))}
           </div>
-          <Link href="/#contact" className="mt-10 inline-flex items-center gap-2 font-semibold text-brass">Start a conversation <ArrowRight size={16} /></Link>
+          <Link href="/contact" className="mt-10 inline-flex items-center gap-2 font-semibold text-brass">Start a conversation <ArrowRight size={16} /></Link>
         </section>
       </main>
     </div>
