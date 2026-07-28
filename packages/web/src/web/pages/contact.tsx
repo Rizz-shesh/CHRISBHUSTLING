@@ -4,11 +4,16 @@ import { Link } from "wouter";
 import { Logo } from "../components/logo";
 import { SERVICE_PAGES } from "../data/service-pages";
 import { useServiceInquiry } from "../queries/services";
+import { useDocumentMeta } from "../hooks/use-document-meta";
 
 const GENERAL_INQUIRY = { slug: "general-inquiry", title: "General Inquiry" };
 const SERVICE_OPTIONS = [GENERAL_INQUIRY, ...SERVICE_PAGES.map((s) => ({ slug: s.slug, title: s.title }))];
 
 export default function ContactPage() {
+  useDocumentMeta(
+    "Contact",
+    "Talk with Chris B Hustling about real estate, credit restoration, business building, mentorship, or wealth consultation. Tell us your goals and we'll follow up.",
+  );
   const inquiry = useServiceInquiry();
   const [form, setForm] = useState({
     serviceSlug: GENERAL_INQUIRY.slug,

@@ -4,10 +4,14 @@ import { Link, useRoute } from "wouter";
 import { Logo } from "../components/logo";
 import { SERVICE_PAGES, getServicePage } from "../data/service-pages";
 import { useServiceInquiry } from "../queries/services";
+import { useDocumentMeta } from "../hooks/use-document-meta";
+import { truncate } from "../lib/utils";
 
 export default function ServicePage() {
   const [, params] = useRoute("/services/:slug");
   const service = getServicePage(params?.slug ?? "");
+
+  useDocumentMeta(service?.title, service ? truncate(service.intro, 155) : undefined);
 
   if (!service) {
     return <main className="flex min-h-screen items-center justify-center bg-cream"><Link href="/#services" className="text-brass">Back to services</Link></main>;

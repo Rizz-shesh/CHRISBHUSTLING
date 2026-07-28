@@ -2,10 +2,14 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Link, useRoute } from "wouter";
 import { Logo } from "../components/logo";
 import { BLOG_POSTS, getBlogPost } from "../data/blog-posts";
+import { useDocumentMeta } from "../hooks/use-document-meta";
+import { truncate } from "../lib/utils";
 
 export default function BlogPostPage() {
   const [, params] = useRoute("/blog/:slug");
   const post = getBlogPost(params?.slug ?? "");
+
+  useDocumentMeta(post?.title, post ? truncate(post.sections[0]?.paragraphs[0] ?? "", 155) : undefined);
 
   if (!post) {
     return (

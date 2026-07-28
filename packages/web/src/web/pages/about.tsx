@@ -1,10 +1,16 @@
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Link } from "wouter";
 import { Logo } from "../components/logo";
+import { useDocumentMeta } from "../hooks/use-document-meta";
 
 const VALUES = ["Honesty", "Transparency", "Client-centered service", "Continuous improvement"];
 
 export default function AboutPage() {
+  useDocumentMeta(
+    "About Us",
+    "Learn about Chris B Hustling's mission, vision, and the principles behind our credit restoration, real estate, business building, mentorship, and wealth consultation services.",
+  );
+
   return (
     <div className="min-h-screen" style={{ background: "var(--ink)", color: "#f4eee4" }}>
       <header className="border-b px-5 py-4" style={{ borderColor: "var(--ledger-line)" }}>
