@@ -28,3 +28,18 @@ export const serviceInquiries = pgTable("service_inquiries", {
   pushedToGhlAt: timestamp("pushed_to_ghl_at"),
   ghlError: text("ghl_error"),
 });
+
+/**
+ * Exit-intent / delayed opt-in popup submissions. The `ip` column backs the
+ * per-IP rate limit in routes/optin.ts (no in-memory counter — it wouldn't
+ * survive serverless cold starts).
+ */
+export const optinSubmissions = pgTable("optin_submissions", {
+  id: serial("id").primaryKey(),
+  firstName: text("first_name").notNull(),
+  email: text("email").notNull(),
+  ip: text("ip"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  pushedToGhlAt: timestamp("pushed_to_ghl_at"),
+  ghlError: text("ghl_error"),
+});
