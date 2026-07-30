@@ -2,13 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { X, ArrowRight, CheckCircle2 } from "lucide-react";
 
 const SESSION_KEY = "cbh_optin_seen";
-const DELAY_MS = 20_000;
+const DELAY_MS = 8_000;
 const EXIT_INTENT_ARM_DELAY_MS = 1_000;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 type Status = "idle" | "submitting" | "success" | "error";
 
-/** Exit-intent / 20s-delay opt-in popup. Shows at most once per session. */
+/** Exit-intent / 8s-delay opt-in popup. Shows at most once per session. */
 export function OptinPopup() {
   const [open, setOpen] = useState(false);
   const [firstName, setFirstName] = useState("");
