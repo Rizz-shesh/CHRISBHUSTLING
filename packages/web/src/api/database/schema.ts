@@ -12,7 +12,7 @@ export const rentalSignups = pgTable("rental_signups", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   // Set when this lead has been pushed to GoHighLevel (GHL) from the admin dashboard.
   pushedToGhlAt: timestamp("pushed_to_ghl_at"),
-});
+}).enableRLS();
 
 export const serviceInquiries = pgTable("service_inquiries", {
   id: serial("id").primaryKey(),
@@ -27,7 +27,7 @@ export const serviceInquiries = pgTable("service_inquiries", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   pushedToGhlAt: timestamp("pushed_to_ghl_at"),
   ghlError: text("ghl_error"),
-});
+}).enableRLS();
 
 /**
  * Exit-intent / delayed opt-in popup submissions. The `ip` column backs the
@@ -42,4 +42,4 @@ export const optinSubmissions = pgTable("optin_submissions", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   pushedToGhlAt: timestamp("pushed_to_ghl_at"),
   ghlError: text("ghl_error"),
-});
+}).enableRLS();
