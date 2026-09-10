@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
 import { Link, useRoute } from "wouter";
 import { Logo } from "../components/logo";
+import { BotTrapFields } from "../components/bot-trap-fields";
 import { SERVICE_PAGES, getServicePage } from "../data/service-pages";
 import { useServiceInquiry } from "../queries/services";
 import { useDocumentMeta } from "../hooks/use-document-meta";
@@ -113,6 +114,8 @@ export default function ServicePage() {
 
 function InquiryForm({ serviceSlug, serviceTitle }: { serviceSlug: string; serviceTitle: string }) {
   const inquiry = useServiceInquiry();
+  const [website, setWebsite] = useState("");
+  const [formStartedAt] = useState(() => Date.now());
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -126,7 +129,7 @@ function InquiryForm({ serviceSlug, serviceTitle }: { serviceSlug: string; servi
     event.preventDefault();
     if (!form.consent) return;
     inquiry.mutate(
-      { serviceSlug, serviceTitle, ...form, consent: true },
+      { serviceSlug, serviceTitle, ...form, consent: true, website, formStartedAt },
       { onSuccess: () => setForm({ name: "", email: "", phone: "", preferredContact: "Phone", message: "", consent: false }) },
     );
   };
@@ -148,6 +151,7 @@ function InquiryForm({ serviceSlug, serviceTitle }: { serviceSlug: string; servi
         </div>
 
         <form onSubmit={submit} className="border bg-[#171c24] p-6 md:p-8" style={{ borderColor: "var(--ledger-line)" }}>
+          <BotTrapFields value={website} onChange={setWebsite} />
           {inquiry.isSuccess ? (
             <div className="flex min-h-80 flex-col items-center justify-center text-center">
               <CheckCircle2 size={38} className="text-brass" />

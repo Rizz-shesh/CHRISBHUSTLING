@@ -3,23 +3,20 @@ import { z } from "zod";
 import { and, eq, gte } from "drizzle-orm";
 import { db } from "../database";
 import * as schema from "../database/schema";
+import { clientIp, isLikelyBot, spamProtectionInput } from "../spam-protection";
 
 const optinInput = z.object({
   firstName: z.string().trim().min(1).max(120),
   email: z.string().trim().email().max(200),
+  ...spamProtectionInput,
 });
 
 const RATE_LIMIT_MAX = 5;
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
-
-function clientIp(headers: Headers) {
-  const forwarded = headers.get("x-forwarded-for");
-  if (forwarded) return forwarded.split(",")[0]?.trim() || "unknown";
-  return headers.get("x-real-ip") ?? "unknown";
-}
+const DUPLICATE_WINDOW_MS = 24 * 60 * 60 * 1_000;
 
 /** Exit-intent / delayed opt-in popup — plain endpoint (not oRPC) so the client can hit a fixed URL with a bare fetch(). */
-export function registerOptin(app: Hono) {
+export function optin(app: Hono) {
   app.post("/api/optin", async (c) => {
     let body: unknown;
     try {
@@ -32,23 +29,45 @@ export function registerOptin(app: Hono) {
     if (!parsed.success) {
       return c.json({ ok: false, error: "A first name and valid email are required." }, 400);
     }
+    if (isLikelyBot(parsed.data)) return c.json({ ok: true, id: 0, ghlSynced: false });
 
     const ip = clientIp(c.req.raw.headers);
-    const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_MS);
-    const recent = await db
+    const email = parsed.data.email.toLowerCase();
+    const now = Date.now();
+    const recentIpPromise =
+      ip === "unknown"
+        ? Promise.resolve([])
+        : db
+            .select({ id: schema.optinSubmissions.id })
+            .from(schema.optinSubmissions)
+            .where(
+              and(
+                eq(schema.optinSubmissions.ip, ip),
+                gte(schema.optinSubmissions.createdAt, new Date(now - RATE_LIMIT_WINDOW_MS)),
+              ),
+            )
+            .limit(RATE_LIMIT_MAX);
+    const recentEmailPromise = db
       .select({ id: schema.optinSubmissions.id })
       .from(schema.optinSubmissions)
-      .where(and(eq(schema.optinSubmissions.ip, ip), gte(schema.optinSubmissions.createdAt, windowStart)));
+      .where(
+        and(
+          eq(schema.optinSubmissions.email, email),
+          gte(schema.optinSubmissions.createdAt, new Date(now - DUPLICATE_WINDOW_MS)),
+        ),
+      )
+      .limit(1);
+    const [recentIp, recentEmail] = await Promise.all([recentIpPromise, recentEmailPromise]);
 
-    if (recent.length >= RATE_LIMIT_MAX) {
-      return c.json({ ok: false, error: "Too many submissions. Please try again later." }, 429);
+    if (recentIp.length >= RATE_LIMIT_MAX || recentEmail.length > 0) {
+      return c.json({ ok: true, id: 0, ghlSynced: false });
     }
 
     const [row] = await db
       .insert(schema.optinSubmissions)
       .values({
         firstName: parsed.data.firstName,
-        email: parsed.data.email.toLowerCase(),
+        email,
         ip,
       })
       .returning();

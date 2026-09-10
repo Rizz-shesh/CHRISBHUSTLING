@@ -1,8 +1,18 @@
 import { z } from "zod";
-import { eq } from "drizzle-orm";
+import { and, eq, gte } from "drizzle-orm";
 import { base } from "../__core/app";
 import { db } from "../database";
 import * as schema from "../database/schema";
+import {
+  clientIp,
+  discardedSubmission,
+  isLikelyBot,
+  spamProtectionInput,
+} from "../spam-protection";
+
+const RATE_LIMIT_MAX = 3;
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1_000;
+const DUPLICATE_WINDOW_MS = 24 * 60 * 60 * 1_000;
 
 export const rentals = {
   signup: base
@@ -13,16 +23,49 @@ export const rentals = {
         phone: z.string().max(40).optional(),
         area: z.string().max(120).optional(),
         consent: z.literal(true),
+        ...spamProtectionInput,
       }),
     )
-    .handler(async ({ input }) => {
+    .handler(async ({ input, context }) => {
+      if (isLikelyBot(input)) return discardedSubmission;
+
+      const email = input.email.trim().toLowerCase();
+      const ip = clientIp(context.headers);
+      const now = Date.now();
+      const recentIpPromise =
+        ip === "unknown"
+          ? Promise.resolve([])
+          : db
+              .select({ id: schema.rentalSignups.id })
+              .from(schema.rentalSignups)
+              .where(
+                and(
+                  eq(schema.rentalSignups.ip, ip),
+                  gte(schema.rentalSignups.createdAt, new Date(now - RATE_LIMIT_WINDOW_MS)),
+                ),
+              )
+              .limit(RATE_LIMIT_MAX);
+      const recentEmailPromise = db
+        .select({ id: schema.rentalSignups.id })
+        .from(schema.rentalSignups)
+        .where(
+          and(
+            eq(schema.rentalSignups.email, email),
+            gte(schema.rentalSignups.createdAt, new Date(now - DUPLICATE_WINDOW_MS)),
+          ),
+        )
+        .limit(1);
+      const [recentIp, recentEmail] = await Promise.all([recentIpPromise, recentEmailPromise]);
+      if (recentIp.length >= RATE_LIMIT_MAX || recentEmail.length > 0) return discardedSubmission;
+
       const [row] = await db
         .insert(schema.rentalSignups)
         .values({
           name: input.name.trim(),
-          email: input.email.trim().toLowerCase(),
+          email,
           phone: input.phone?.trim() || null,
           area: input.area?.trim() || null,
+          ip,
         })
         .returning();
       if (!row) throw new Error("Rental signup could not be saved.");

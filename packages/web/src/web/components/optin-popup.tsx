@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { X, ArrowRight, CheckCircle2 } from "lucide-react";
+import { BotTrapFields } from "./bot-trap-fields";
 
 const SESSION_KEY = "cbh_optin_seen";
 const DELAY_MS = 8_000;
@@ -13,6 +14,8 @@ export function OptinPopup() {
   const [open, setOpen] = useState(false);
   const [firstName, setFirstName] = useState("");
   const [email, setEmail] = useState("");
+  const [website, setWebsite] = useState("");
+  const [formStartedAt] = useState(() => Date.now());
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState<string | null>(null);
   const shownRef = useRef(false);
@@ -77,7 +80,12 @@ export function OptinPopup() {
       const res = await fetch("/api/optin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ firstName: firstName.trim(), email: email.trim() }),
+        body: JSON.stringify({
+          firstName: firstName.trim(),
+          email: email.trim(),
+          website,
+          formStartedAt,
+        }),
       });
       const data = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
       if (!res.ok || !data?.ok) {
@@ -132,7 +140,8 @@ export function OptinPopup() {
             </button>
           </div>
         ) : (
-          <form onSubmit={submit}>
+          <form onSubmit={submit} className="relative">
+            <BotTrapFields value={website} onChange={setWebsite} />
             <p className="font-mono text-[0.68rem] uppercase tracking-[0.2em] text-brass">Before you go</p>
             <h2 className="mt-3 font-display text-2xl font-semibold leading-tight text-[#f4eee4]">
               Stay in the loop.

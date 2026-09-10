@@ -5,6 +5,7 @@ import { FaTiktok } from "react-icons/fa6";
 import { Logo } from "../components/logo";
 import { AscendingLine } from "../components/ascending-line";
 import { useRentalSignup } from "../queries/rentals";
+import { BotTrapFields } from "../components/bot-trap-fields";
 
 const SOCIAL_LINKS = [
   { label: "Facebook", href: "https://www.facebook.com/people/Chrisbhustling-Business-Real-Estate/100083666815787/", Icon: Facebook },
@@ -561,12 +562,14 @@ function SystemsInsert() {
 function RentalInsert() {
   const signup = useRentalSignup();
   const [form, setForm] = useState({ name: "", email: "", phone: "", area: "", consent: false });
+  const [website, setWebsite] = useState("");
+  const [formStartedAt] = useState(() => Date.now());
   const done = signup.isSuccess;
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name || !form.email || !form.consent) return;
-    signup.mutate({ ...form, consent: true });
+    signup.mutate({ ...form, consent: true, website, formStartedAt });
   };
 
   return (
@@ -627,7 +630,8 @@ function RentalInsert() {
                   </p>
                 </div>
               ) : (
-                <form onSubmit={submit} className="flex flex-col gap-4">
+                <form onSubmit={submit} className="relative flex flex-col gap-4">
+                  <BotTrapFields value={website} onChange={setWebsite} />
                   <InsertInput
                     label="Full name"
                     value={form.name}

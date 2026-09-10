@@ -19091,6 +19091,21 @@ class ExtraConfigColumn extends PgColumn {
     return this;
   }
 }
+
+class IndexedColumn {
+  static [entityKind] = "IndexedColumn";
+  constructor(name, keyAsName, type, indexConfig) {
+    this.name = name;
+    this.keyAsName = keyAsName;
+    this.type = type;
+    this.indexConfig = indexConfig;
+  }
+  name;
+  keyAsName;
+  type;
+  indexConfig;
+}
+
 class PgArrayBuilder extends PgColumnBuilder {
   static [entityKind] = "PgArrayBuilder";
   constructor(name, baseBuilder, size) {
@@ -23683,6 +23698,88 @@ class SelectionProxyHandler {
   }
 }
 
+// node_modules/.bun/drizzle-orm@0.45.2+bbb66cb84ce077d1/node_modules/drizzle-orm/pg-core/indexes.js
+class IndexBuilderOn {
+  constructor(unique, name) {
+    this.unique = unique;
+    this.name = name;
+  }
+  static [entityKind] = "PgIndexBuilderOn";
+  on(...columns) {
+    return new IndexBuilder(columns.map((it) => {
+      if (is(it, SQL)) {
+        return it;
+      }
+      it = it;
+      const clonedIndexedColumn = new IndexedColumn(it.name, !!it.keyAsName, it.columnType, it.indexConfig);
+      it.indexConfig = JSON.parse(JSON.stringify(it.defaultConfig));
+      return clonedIndexedColumn;
+    }), this.unique, false, this.name);
+  }
+  onOnly(...columns) {
+    return new IndexBuilder(columns.map((it) => {
+      if (is(it, SQL)) {
+        return it;
+      }
+      it = it;
+      const clonedIndexedColumn = new IndexedColumn(it.name, !!it.keyAsName, it.columnType, it.indexConfig);
+      it.indexConfig = it.defaultConfig;
+      return clonedIndexedColumn;
+    }), this.unique, true, this.name);
+  }
+  using(method, ...columns) {
+    return new IndexBuilder(columns.map((it) => {
+      if (is(it, SQL)) {
+        return it;
+      }
+      it = it;
+      const clonedIndexedColumn = new IndexedColumn(it.name, !!it.keyAsName, it.columnType, it.indexConfig);
+      it.indexConfig = JSON.parse(JSON.stringify(it.defaultConfig));
+      return clonedIndexedColumn;
+    }), this.unique, true, this.name, method);
+  }
+}
+
+class IndexBuilder {
+  static [entityKind] = "PgIndexBuilder";
+  config;
+  constructor(columns, unique, only, name, method = "btree") {
+    this.config = {
+      name,
+      columns,
+      unique,
+      only,
+      method
+    };
+  }
+  concurrently() {
+    this.config.concurrently = true;
+    return this;
+  }
+  with(obj) {
+    this.config.with = obj;
+    return this;
+  }
+  where(condition) {
+    this.config.where = condition;
+    return this;
+  }
+  build(table) {
+    return new Index(this.config, table);
+  }
+}
+
+class Index {
+  static [entityKind] = "PgIndex";
+  config;
+  constructor(config2, table) {
+    this.config = { ...config2, table };
+  }
+}
+function index(name) {
+  return new IndexBuilderOn(false, name);
+}
+
 // node_modules/.bun/drizzle-orm@0.45.2+bbb66cb84ce077d1/node_modules/drizzle-orm/casing.js
 function toSnakeCase(input) {
   const words = input.replace(/['\u2019]/g, "").match(/[\da-z]+|[A-Z]+(?![a-z])|[A-Z][\da-z]+/g) ?? [];
@@ -23880,8 +23977,8 @@ class PgDialect {
       return;
     }
     const joinsArray = [];
-    for (const [index, joinMeta] of joins.entries()) {
-      if (index === 0) {
+    for (const [index2, joinMeta] of joins.entries()) {
+      if (index2 === 0) {
         joinsArray.push(sql` `);
       }
       const table = joinMeta.table;
@@ -23902,7 +23999,7 @@ class PgDialect {
       } else {
         joinsArray.push(sql`${sql.raw(joinMeta.joinType)} join${lateralSql} ${table}${onSql}`);
       }
-      if (index < joins.length - 1) {
+      if (index2 < joins.length - 1) {
         joinsArray.push(sql` `);
       }
     }
@@ -25748,9 +25845,10 @@ var rentalSignups = pgTable("rental_signups", {
   email: text("email").notNull(),
   phone: text("phone"),
   area: text("area"),
+  ip: text("ip"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   pushedToGhlAt: timestamp("pushed_to_ghl_at")
-});
+}, (table) => [index("rental_signups_ip_created_at_idx").on(table.ip, table.createdAt)]).enableRLS();
 var serviceInquiries = pgTable("service_inquiries", {
   id: serial("id").primaryKey(),
   serviceSlug: text("service_slug").notNull(),
@@ -25761,10 +25859,11 @@ var serviceInquiries = pgTable("service_inquiries", {
   preferredContact: text("preferred_contact").notNull(),
   message: text("message"),
   consent: boolean4("consent").notNull(),
+  ip: text("ip"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   pushedToGhlAt: timestamp("pushed_to_ghl_at"),
   ghlError: text("ghl_error")
-});
+}, (table) => [index("service_inquiries_ip_created_at_idx").on(table.ip, table.createdAt)]).enableRLS();
 var optinSubmissions = pgTable("optin_submissions", {
   id: serial("id").primaryKey(),
   firstName: text("first_name").notNull(),
@@ -25773,25 +25872,60 @@ var optinSubmissions = pgTable("optin_submissions", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   pushedToGhlAt: timestamp("pushed_to_ghl_at"),
   ghlError: text("ghl_error")
-});
+}, (table) => [index("optin_submissions_ip_created_at_idx").on(table.ip, table.createdAt)]).enableRLS();
 
 // packages/web/src/api/database/__client.ts
 var client = src_default(process.env.DATABASE_URL, { prepare: false, connect_timeout: 8 });
 var db = drizzle(client, { schema: exports_schema });
+// packages/web/src/api/spam-protection.ts
+var MIN_FORM_AGE_MS = 2000;
+var MAX_FORM_AGE_MS = 24 * 60 * 60 * 1000;
+var CLOCK_SKEW_MS = 1e4;
+var spamProtectionInput = {
+  website: exports_external.string().max(200),
+  formStartedAt: exports_external.number().int().positive()
+};
+function isLikelyBot(input, now = Date.now()) {
+  const age = now - input.formStartedAt;
+  return input.website.trim().length > 0 || age < MIN_FORM_AGE_MS || age > MAX_FORM_AGE_MS + CLOCK_SKEW_MS;
+}
+function clientIp(headers) {
+  const forwarded = headers.get("x-forwarded-for");
+  if (forwarded)
+    return forwarded.split(",")[0]?.trim() || "unknown";
+  return headers.get("x-real-ip")?.trim() || "unknown";
+}
+var discardedSubmission = { ok: true, id: 0, ghlSynced: false };
+
 // packages/web/src/api/routes/rentals.ts
+var RATE_LIMIT_MAX = 3;
+var RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
+var DUPLICATE_WINDOW_MS = 24 * 60 * 60 * 1000;
 var rentals = {
   signup: base.input(exports_external.object({
     name: exports_external.string().min(1).max(120),
     email: exports_external.string().email().max(200),
     phone: exports_external.string().max(40).optional(),
     area: exports_external.string().max(120).optional(),
-    consent: exports_external.literal(true)
-  })).handler(async ({ input }) => {
+    consent: exports_external.literal(true),
+    ...spamProtectionInput
+  })).handler(async ({ input, context }) => {
+    if (isLikelyBot(input))
+      return discardedSubmission;
+    const email3 = input.email.trim().toLowerCase();
+    const ip = clientIp(context.headers);
+    const now = Date.now();
+    const recentIpPromise = ip === "unknown" ? Promise.resolve([]) : db.select({ id: rentalSignups.id }).from(rentalSignups).where(and(eq(rentalSignups.ip, ip), gte(rentalSignups.createdAt, new Date(now - RATE_LIMIT_WINDOW_MS)))).limit(RATE_LIMIT_MAX);
+    const recentEmailPromise = db.select({ id: rentalSignups.id }).from(rentalSignups).where(and(eq(rentalSignups.email, email3), gte(rentalSignups.createdAt, new Date(now - DUPLICATE_WINDOW_MS)))).limit(1);
+    const [recentIp, recentEmail] = await Promise.all([recentIpPromise, recentEmailPromise]);
+    if (recentIp.length >= RATE_LIMIT_MAX || recentEmail.length > 0)
+      return discardedSubmission;
     const [row] = await db.insert(rentalSignups).values({
       name: input.name.trim(),
-      email: input.email.trim().toLowerCase(),
+      email: email3,
       phone: input.phone?.trim() || null,
-      area: input.area?.trim() || null
+      area: input.area?.trim() || null,
+      ip
     }).returning();
     if (!row)
       throw new Error("Rental signup could not be saved.");
@@ -25912,6 +26046,9 @@ var admin = {
 };
 
 // packages/web/src/api/routes/services.ts
+var RATE_LIMIT_MAX2 = 3;
+var RATE_LIMIT_WINDOW_MS2 = 60 * 60 * 1000;
+var DUPLICATE_WINDOW_MS2 = 24 * 60 * 60 * 1000;
 var inquiryInput = exports_external.object({
   serviceSlug: exports_external.string().min(1).max(120),
   serviceTitle: exports_external.string().min(1).max(160),
@@ -25920,19 +26057,31 @@ var inquiryInput = exports_external.object({
   phone: exports_external.string().min(7).max(40),
   preferredContact: exports_external.enum(["Phone", "Email", "Text"]),
   message: exports_external.string().max(2000).optional(),
-  consent: exports_external.literal(true)
+  consent: exports_external.literal(true),
+  ...spamProtectionInput
 });
 var services = {
-  inquire: base.input(inquiryInput).handler(async ({ input }) => {
+  inquire: base.input(inquiryInput).handler(async ({ input, context }) => {
+    if (isLikelyBot(input))
+      return discardedSubmission;
+    const email3 = input.email.trim().toLowerCase();
+    const ip = clientIp(context.headers);
+    const now = Date.now();
+    const recentIpPromise = ip === "unknown" ? Promise.resolve([]) : db.select({ id: serviceInquiries.id }).from(serviceInquiries).where(and(eq(serviceInquiries.ip, ip), gte(serviceInquiries.createdAt, new Date(now - RATE_LIMIT_WINDOW_MS2)))).limit(RATE_LIMIT_MAX2);
+    const recentEmailPromise = db.select({ id: serviceInquiries.id }).from(serviceInquiries).where(and(eq(serviceInquiries.email, email3), gte(serviceInquiries.createdAt, new Date(now - DUPLICATE_WINDOW_MS2)))).limit(1);
+    const [recentIp, recentEmail] = await Promise.all([recentIpPromise, recentEmailPromise]);
+    if (recentIp.length >= RATE_LIMIT_MAX2 || recentEmail.length > 0)
+      return discardedSubmission;
     const [row] = await db.insert(serviceInquiries).values({
       serviceSlug: input.serviceSlug,
       serviceTitle: input.serviceTitle,
       name: input.name.trim(),
-      email: input.email.trim().toLowerCase(),
+      email: email3,
       phone: input.phone.trim(),
       preferredContact: input.preferredContact,
       message: input.message?.trim() || null,
-      consent: input.consent
+      consent: input.consent,
+      ip
     }).returning();
     if (!row)
       throw new Error("Service inquiry could not be saved.");
@@ -25974,17 +26123,13 @@ var services = {
 // packages/web/src/api/routes/optin.ts
 var optinInput = exports_external.object({
   firstName: exports_external.string().trim().min(1).max(120),
-  email: exports_external.string().trim().email().max(200)
+  email: exports_external.string().trim().email().max(200),
+  ...spamProtectionInput
 });
-var RATE_LIMIT_MAX = 5;
-var RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
-function clientIp(headers) {
-  const forwarded = headers.get("x-forwarded-for");
-  if (forwarded)
-    return forwarded.split(",")[0]?.trim() || "unknown";
-  return headers.get("x-real-ip") ?? "unknown";
-}
-function registerOptin(app) {
+var RATE_LIMIT_MAX3 = 5;
+var RATE_LIMIT_WINDOW_MS3 = 60 * 60 * 1000;
+var DUPLICATE_WINDOW_MS3 = 24 * 60 * 60 * 1000;
+function optin(app) {
   app.post("/api/optin", async (c) => {
     let body;
     try {
@@ -25996,15 +26141,20 @@ function registerOptin(app) {
     if (!parsed.success) {
       return c.json({ ok: false, error: "A first name and valid email are required." }, 400);
     }
+    if (isLikelyBot(parsed.data))
+      return c.json({ ok: true, id: 0, ghlSynced: false });
     const ip = clientIp(c.req.raw.headers);
-    const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_MS);
-    const recent = await db.select({ id: optinSubmissions.id }).from(optinSubmissions).where(and(eq(optinSubmissions.ip, ip), gte(optinSubmissions.createdAt, windowStart)));
-    if (recent.length >= RATE_LIMIT_MAX) {
-      return c.json({ ok: false, error: "Too many submissions. Please try again later." }, 429);
+    const email3 = parsed.data.email.toLowerCase();
+    const now = Date.now();
+    const recentIpPromise = ip === "unknown" ? Promise.resolve([]) : db.select({ id: optinSubmissions.id }).from(optinSubmissions).where(and(eq(optinSubmissions.ip, ip), gte(optinSubmissions.createdAt, new Date(now - RATE_LIMIT_WINDOW_MS3)))).limit(RATE_LIMIT_MAX3);
+    const recentEmailPromise = db.select({ id: optinSubmissions.id }).from(optinSubmissions).where(and(eq(optinSubmissions.email, email3), gte(optinSubmissions.createdAt, new Date(now - DUPLICATE_WINDOW_MS3)))).limit(1);
+    const [recentIp, recentEmail] = await Promise.all([recentIpPromise, recentEmailPromise]);
+    if (recentIp.length >= RATE_LIMIT_MAX3 || recentEmail.length > 0) {
+      return c.json({ ok: true, id: 0, ghlSynced: false });
     }
     const [row] = await db.insert(optinSubmissions).values({
       firstName: parsed.data.firstName,
-      email: parsed.data.email.toLowerCase(),
+      email: email3,
       ip
     }).returning();
     if (!row)
@@ -26042,7 +26192,7 @@ var router = base.router({
   services
 });
 var app = createApp(router);
-registerOptin(app);
+optin(app);
 var api_default = app;
 
 // api-src/handler.ts

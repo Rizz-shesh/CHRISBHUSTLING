@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
 import { Link } from "wouter";
 import { Logo } from "../components/logo";
+import { BotTrapFields } from "../components/bot-trap-fields";
 import { SERVICE_PAGES } from "../data/service-pages";
 import { useServiceInquiry } from "../queries/services";
 import { useDocumentMeta } from "../hooks/use-document-meta";
@@ -15,6 +16,8 @@ export default function ContactPage() {
     "Talk with Chris B Hustling about real estate, credit restoration, business building, mentorship, or wealth consultation. Tell us your goals and we'll follow up.",
   );
   const inquiry = useServiceInquiry();
+  const [website, setWebsite] = useState("");
+  const [formStartedAt] = useState(() => Date.now());
   const [form, setForm] = useState({
     serviceSlug: GENERAL_INQUIRY.slug,
     name: "",
@@ -40,6 +43,8 @@ export default function ContactPage() {
         preferredContact: form.preferredContact,
         message: form.message,
         consent: true,
+        website,
+        formStartedAt,
       },
       {
         onSuccess: () =>
@@ -96,6 +101,7 @@ export default function ContactPage() {
             </div>
 
             <form onSubmit={submit} className="border bg-[#171c24] p-6 md:p-8" style={{ borderColor: "var(--ledger-line)" }}>
+              <BotTrapFields value={website} onChange={setWebsite} />
               {inquiry.isSuccess ? (
                 <div className="flex min-h-80 flex-col items-center justify-center text-center">
                   <CheckCircle2 size={38} className="text-brass" />
